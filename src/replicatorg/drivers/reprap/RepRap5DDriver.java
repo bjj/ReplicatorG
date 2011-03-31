@@ -164,6 +164,10 @@ public class RepRap5DDriver extends SerialDriver implements SerialFifoEventListe
 		df = new DecimalFormat("#.######");
 	}
 
+        public String getDriverName() {
+                return "RepRap5D";
+        }
+
 	public synchronized void loadXML(Node xml) {
 		super.loadXML(xml);
         // load from our XML config, if we have it.
