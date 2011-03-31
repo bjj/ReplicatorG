@@ -749,6 +749,8 @@ public class RepRap5DDriver extends SerialDriver implements SerialFifoEventListe
 				// resend the line
 				this.resendCommand(bufferedLine, bufferedLine);
 
+			} else if (line.startsWith("t:")) {
+				// temperature handled above
 			} else {
 				Base.logger.severe("Unknown: " + line);
 			}
