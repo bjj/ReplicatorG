@@ -622,6 +622,7 @@ public class RepRap5DDriver extends SerialDriver implements SerialFifoEventListe
 		if (responseLength < 0) {
 			// This signifies EOF. FIXME: How do we handle this?
 			Base.logger.severe("SerialPassthroughDriver.readResponse(): EOF occured");
+			readResponseLock.unlock();
 			return;
 		} else if(responseLength!=0) {
 			String line;
