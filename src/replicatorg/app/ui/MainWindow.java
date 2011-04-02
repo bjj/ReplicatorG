@@ -1815,6 +1815,15 @@ public class MainWindow extends JFrame implements MRJAboutHandler, MRJQuitHandle
 		}
 	}
 
+	/**
+	 * Display a message about finishing or aborting a build.
+	 */
+	private void notifyBuildEnd(String title, String message) {
+		if (Base.preferences.getBoolean("build.finish_popup",true)) {
+			Base.showMessage(title, message);
+		}
+		Base.logger.info(message);
+	}
 
 	/**
 	 * give a prompt and stuff about the build being done with elapsed time,
@@ -1829,7 +1838,7 @@ public class MainWindow extends JFrame implements MRJAboutHandler, MRJQuitHandle
 		String message = "Build finished.\n\n";
 		message += "Completed in "
 				+ EstimationDriver.getBuildTimeString(elapsed);
-		Base.showMessage("Build finished", message);
+		notifyBuildEnd("Build finished", message);
 	}
 
 	private void notifyBuildAborted(Date started, Date aborted) {
@@ -1845,8 +1854,9 @@ public class MainWindow extends JFrame implements MRJAboutHandler, MRJQuitHandle
 		// Highlight the line at which the user aborted...
 		int atWhichLine = machine.getLinesProcessed();
 		highlightLine(atWhichLine);
+		message += " at line " + atWhichLine;
 
-		Base.showMessage("Build aborted (line "+ atWhichLine+")", message);
+		notifyBuildEnd("Build aborted (line "+ atWhichLine+")", message);
 	}
 
 	// synchronized public void buildingOver()
