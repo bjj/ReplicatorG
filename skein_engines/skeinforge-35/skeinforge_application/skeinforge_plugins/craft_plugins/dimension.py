@@ -253,7 +253,8 @@ class DimensionSkein:
 		elif firstWord == 'M101':
 			if self.restartDistance != 0:
 				self.addLinearMoveExtrusionDistanceLine( self.restartDistance )
-			if not self.repository.relativeExtrusionDistance.value:
+			# distance limit is based on 32-bit float retaining about 0.01 resolution ~(2^23/100):
+			if not self.repository.relativeExtrusionDistance.value and self.totalExtrusionDistance > 100000:
 				self.distanceFeedRate.addLine('G92 E0')
 				self.totalExtrusionDistance = 0.0
 			self.isExtruderActive = True
