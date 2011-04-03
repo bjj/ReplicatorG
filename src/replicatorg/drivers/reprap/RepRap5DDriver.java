@@ -688,13 +688,30 @@ public class RepRap5DDriver extends SerialDriver implements SerialFifoEventListe
 
 			// old arduino firmware sends "start"
 			else if (line.contains("start")) {
+				// Reset line number first in case gcode is sent below
+				lineNumber.set(-1);
+
+				if (isInitialized()) {
+
+					// If there are outstanding commands try to abort any print in progress.
+					// This is a poor test:  but do we know if we're printing at this level?
+					boolean active = !buffer.isEmpty();
+					flushBuffer();
+
+					// tried setInitialized(false); but that didn't work well
+					sendInitializationGcode(false);
+
+					if (active) {
+						Base.logger.severe("Firmware reset with active commands!");
+						setError("Firmware reset with active commands!");
+					}
+				}
+
 				// todo: set version
-				// TODO: check if this was supposed to happen, otherwise report unexpected reset! 
 				synchronized (startReceived) {
 					startReceived.set(true);
 					startReceived.notifyAll();
 				}
-				lineNumber.set(-1);
 
 			} else if (line.startsWith("extruder fail")) {
 				setError("Extruder failed:  cannot extrude as this rate.");
