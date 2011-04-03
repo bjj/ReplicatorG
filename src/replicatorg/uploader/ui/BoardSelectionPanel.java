@@ -1,6 +1,7 @@
 package replicatorg.uploader.ui;
 
 import java.awt.Component;
+import java.awt.Image;
 
 import javax.swing.AbstractListModel;
 import javax.swing.Icon;
@@ -55,8 +56,13 @@ public class BoardSelectionPanel extends JPanel {
 			String name = e.getAttribute("name");
 			String iconStr = e.getAttribute("icon");
 			if (iconStr != null && !(iconStr.length() == 0)) {
-				ImageIcon icon = new ImageIcon(Base.getImage("images/"+iconStr, this));
-				setIcon(icon);
+				Image image = Base.getImage("images/"+iconStr, this);
+				if (image != null) {
+					ImageIcon icon = new ImageIcon(image);
+					setIcon(icon);
+				} else {
+					setIcon(boardIcon);
+				}
 			} else {
 				setIcon(boardIcon);
 			}
