@@ -998,6 +998,27 @@ public class RepRap5DDriver extends SerialDriver implements SerialFifoEventListe
 		super.enableMotor();
 	}
 
+	/**
+	 * Unified enable+delay+disable to allow us to use G1 E
+	 */
+	public synchronized void enableMotor(long millis) throws RetryException {
+		if (fiveD == false)
+		{
+			super.enableMotor(millis);
+		}
+		else
+		{
+			super.enableMotor();
+			double feedrate = machine.currentTool().getMotorSpeedRPM();
+			double distance = millis * feedrate / 60 / 1000;
+			if (machine.currentTool().getMotorDirection() != 1) {
+				distance *= -1;
+			}
+			sendCommand(_getToolCode() + "G1 E" + (ePosition.get() + distance) + " F" + feedrate);
+			super.disableMotor();
+		}
+	}
+
 	public void disableMotor() throws RetryException {
 		if (fiveD == false)
 		{
