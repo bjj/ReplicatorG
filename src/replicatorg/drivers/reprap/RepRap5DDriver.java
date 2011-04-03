@@ -206,6 +206,17 @@ public class RepRap5DDriver extends SerialDriver implements SerialFifoEventListe
 		extrusionUpdater.update();
 	}
 
+	/**
+	 * Send any gcode needed to synchronize the driver state and
+	 * the firmware state.  Sent on startup and if we see "start"
+	 * indicating an uncommanded firmware reset.
+	 */
+	public void sendInitializationGcode(boolean synchronous) {
+		sendCommand("M110", synchronous);  // may be duplicate, that's ok
+		// default us to absolute positioning
+		sendCommand("G90", synchronous);
+		sendCommand("G92 X0 Y0 Z0 E0", synchronous);
+	}
 
 	public synchronized void initialize() {
 		// declare our serial guy.
@@ -269,9 +280,7 @@ public class RepRap5DDriver extends SerialDriver implements SerialFifoEventListe
 
 			Base.logger.fine("GCode response received. RepRap connected.");
 
-			// default us to absolute positioning
-			sendCommand("G90");
-			sendCommand("G92 X0 Y0 Z0 E0");
+			sendInitializationGcode(true);
 			Base.logger.info("Ready.");
 			this.setInitialized(true);
 		}
