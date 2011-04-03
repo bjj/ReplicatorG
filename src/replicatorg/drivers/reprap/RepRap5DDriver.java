@@ -99,6 +99,13 @@ public class RepRap5DDriver extends SerialDriver implements SerialFifoEventListe
 	 * Enables pulsing RTS to restart the RepRap on connect.
 	 */
 	private boolean pulseRTS = true;
+
+	/**
+	 * if true the firmware sends "resend: 1234" and then "ok" for
+	 * the same line and we need to eat that extra "ok".  Teacup does
+	 * not do this but Tonokip, Klimentkip and FiveD do
+	 */
+	private boolean okAfterResend = true;
 	
 	/**
 	 * if true the driver will wait for a "start" signal when pulsing rts low 
@@ -190,6 +197,9 @@ public class RepRap5DDriver extends SerialDriver implements SerialFifoEventListe
         if (XML.hasChildNode(xml, "limitFeedrate")) {
         	rcFeedrateLimit = Double.parseDouble(XML.getChildNodeValue(xml, "limitFeedrate"));
         }
+	if (XML.hasChildNode(xml, "okAfterResend")) {
+		okAfterResend = Boolean.parseBoolean(XML.getChildNodeValue(xml, "okAfterResend"));
+	}
         
         if (XML.hasChildNode(xml, "introduceNoise")) {
         	double introduceNoise = Double.parseDouble(XML.getChildNodeValue(xml, "introduceNoise"));
@@ -756,8 +766,10 @@ public class RepRap5DDriver extends SerialDriver implements SerialFifoEventListe
 							break lineSearch;
 						}
 					}
-                                        // firmware sends "ok" after resend, put something here to consume it:
-                                        buffer.addLast(";resend-ok");
+					if (okAfterResend) {
+						// firmware sends "ok" after resend, put something here to consume it:
+						buffer.addLast(";resend-ok");
+					}
 					bufferLock.unlock();
 
 					if (!found) {
