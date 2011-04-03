@@ -668,6 +668,21 @@ public class RepRap5DDriver extends SerialDriver implements SerialFifoEventListe
 							Double.parseDouble(bedTemp));
 			    }
 			}
+			else if (line.startsWith("ok c:")||line.startsWith("c:")) {
+				Pattern r = Pattern.compile("c: *x([-0-9\\.]+) *y([-0-9\\.]+) *z([-0-9\\.]+)");
+				Matcher m = r.matcher(line);
+				if (m.find()) {
+					double x = Double.parseDouble(m.group(1));
+					double y = Double.parseDouble(m.group(2));
+					double z = Double.parseDouble(m.group(3));
+					// super to avoid parroting back a G92
+					try {
+						super.setCurrentPosition(new Point5d(x, y, z));
+					} catch (RetryException e) {
+						// do or do not, there is no retry
+					}
+				}
+			}
 			if (line.startsWith("ok")) {
 				
 				synchronized(okReceived)
@@ -793,8 +808,8 @@ public class RepRap5DDriver extends SerialDriver implements SerialFifoEventListe
 					this.resendCommand(applyChecksum("N"+(lineNumber.get()-1)+" M110"));
 				}
 
-			} else if (line.startsWith("t:")) {
-				// temperature handled above
+			} else if (line.startsWith("t:") || line.startsWith("c:")) {
+				// temperature, position handled above
 			} else {
 				Base.logger.severe("Unknown: " + line);
 			}
@@ -884,6 +899,7 @@ public class RepRap5DDriver extends SerialDriver implements SerialFifoEventListe
 		}
 		sendCommand(buf.toString());
 
+		invalidatePosition();
 		super.homeAxes(axes,false,0);
 	}
 
@@ -1136,10 +1152,15 @@ public class RepRap5DDriver extends SerialDriver implements SerialFifoEventListe
 		// No implementation needed for synchronous machines.
 		//sendCommand("M0");
 		// M0 is the same as emergency stop: will hang all communications. You don't really want that...
+		invalidatePosition();
 		Base.logger.info("RepRap/Ultimaker Machine stop called.");
 	}
 
-        protected Point5d reconcilePosition() {
+	protected Point5d reconcilePosition() {
+		sendCommand("M114");
+		// If the firmware returned a position then the reply parser
+		// already set the current position and our caller is actually
+		// going to end up ignoring what we return.
 		return new Point5d();
 	}
 
