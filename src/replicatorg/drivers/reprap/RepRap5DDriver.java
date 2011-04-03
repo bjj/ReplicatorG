@@ -669,15 +669,21 @@ public class RepRap5DDriver extends SerialDriver implements SerialFifoEventListe
 
 				bufferLock.lock();
 				//Notify the thread waitining in this gcode's sendCommand method that the gcode has been received.
-				String notifier = buffer.removeLast();
-				synchronized(notifier) { notifier.notifyAll(); }
+				if (buffer.isEmpty()) {
+					Base.logger.severe("Received OK with nothing queued!");
+				} else {
+					String notifier = buffer.removeLast();
+					if(debugLevel > 1)
+						Base.logger.info("FW Accepted: " + notifier);
+					synchronized(notifier) { notifier.notifyAll(); }
+				}
+				bufferLock.unlock();
 				
 				synchronized(bufferLock)
 				{ /*let any sendCommand method waiting to send know that the buffer is 
 					now smaller and may be able to fit their command.*/
 					bufferLock.notifyAll();
 				}
-				bufferLock.unlock();
 			}
 
 			// old arduino firmware sends "start"
