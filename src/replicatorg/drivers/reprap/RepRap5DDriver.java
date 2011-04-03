@@ -228,6 +228,8 @@ public class RepRap5DDriver extends SerialDriver implements SerialFifoEventListe
 		if (!isInitialized()) {
 			Base.logger.info("Initializing Serial.");
 
+			flushBuffer();
+
 			if (pulseRTS)
 			{
 				Base.logger.fine("Resetting RepRap: Pulsing RTS..");
@@ -752,6 +754,22 @@ public class RepRap5DDriver extends SerialDriver implements SerialFifoEventListe
 
 	public boolean isFinished() {
 		return isBufferEmpty();
+	}
+
+	/**
+	 * Clear the command buffer and send notifications to everyone
+	 * waiting for their completion.
+	 */
+	private void flushBuffer() {
+		bufferLock.lock();
+		while (!buffer.isEmpty())
+		{
+			String notifier = buffer.removeLast();
+			if(debugLevel > 1)
+				Base.logger.fine("Flushing dead command: " + notifier);
+			synchronized(notifier) { notifier.notifyAll(); }
+		}
+		bufferLock.unlock();
 	}
 
 	/**
