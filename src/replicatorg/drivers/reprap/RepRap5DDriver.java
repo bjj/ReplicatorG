@@ -125,20 +125,10 @@ public class RepRap5DDriver extends SerialDriver implements SerialFifoEventListe
 	private final ExtrusionUpdater extrusionUpdater = new ExtrusionUpdater(this);
 
 	/**
-	 * To keep track of outstanding commands
-	 */
-	protected final Queue<Integer> commands;
-
-	/**
 	 * the size of the buffer on the GCode host
 	 */
 	private int maxBufferSize = 128;
 
-	/**
-	 * the amount of data we've sent and is in the buffer.
-	 */
-	private int bufferSize = 0;
-	
 	/**
 	 * The commands sent but not yet acknowledged by the firmware. Stored so they can be resent 
 	 * if there is a checksum problem.
@@ -157,8 +147,6 @@ public class RepRap5DDriver extends SerialDriver implements SerialFifoEventListe
 		super();
 		
 		// init our variables.
-		commands = new LinkedList<Integer>();
-		bufferSize = 0;
 		setInitialized(false);
 
 		df = new DecimalFormat("#.######");
@@ -440,6 +428,7 @@ public class RepRap5DDriver extends SerialDriver implements SerialFifoEventListe
 		{
 			//wait for the number of commands queued in the buffer to shrink before 
 			//adding the next command to it.
+                        // NOTE: must compute bufferSize from buffer elements now
 			while(bufferSize + next.length() + 1 > maxBufferSize)
 			{
 				Base.logger.warning("reprap driver buffer full. gcode write slowed.");
@@ -478,11 +467,6 @@ public class RepRap5DDriver extends SerialDriver implements SerialFifoEventListe
 					serial.write(next + "\n");
 				}
 				serialInUse.unlock();
-
-				// record it in our buffer tracker.
-				int cmdlen = next.length() + 1;
-				commands.add(cmdlen);
-				bufferSize += cmdlen;
 				buffer.addFirst(next);
 				bufferLock.unlock();
 
@@ -671,7 +655,6 @@ public class RepRap5DDriver extends SerialDriver implements SerialFifoEventListe
 					okReceived.set(true);
 					okReceived.notifyAll();
 				}
-				bufferSize -= commands.remove();
 
 				bufferLock.lock();
 				//Notify the thread waitining in this gcode's sendCommand method that the gcode has been received.
@@ -703,7 +686,6 @@ public class RepRap5DDriver extends SerialDriver implements SerialFifoEventListe
 				//Getting the correct line from our buffer
 				bufferLock.lock();
 				String bufferedLine = buffer.removeLast();
-				bufferSize -= commands.remove();
 				bufferLock.unlock();
 
 				//Is it a Dud M or G code? If so write a warning and return.
@@ -767,20 +749,25 @@ public class RepRap5DDriver extends SerialDriver implements SerialFifoEventListe
 	 * Is our buffer empty? If don't have a buffer, its always true.
 	 */
 	public boolean isBufferEmpty() {
-//		try {
-//			readResponse();
-//		} catch (Exception e) {
-//		}
 		bufferLock.lock();
-		boolean isEmpty = (bufferSize == 0);
+		boolean isEmpty = buffer.isEmpty();
 		bufferLock.unlock();
 		return isEmpty;
+	}
+
+	/**
+	 * What is our queue size?  Used by extrusion driver
+	 */
+	public int queueSize() {
+		bufferLock.lock();
+		int queueSize = buffer.size();
+		bufferLock.unlock();
+		return queueSize;
 	}
 
 	public synchronized void dispose() {
 		bufferLock.lock();
 		super.dispose();
-		commands.clear();
 		bufferLock.unlock();
 	}
 
@@ -1064,10 +1051,6 @@ public class RepRap5DDriver extends SerialDriver implements SerialFifoEventListe
 	public synchronized void reset() {
 		Base.logger.info("Reset.");
 		setInitialized(false);
-		// resetting the serial port + command queue
-		//this.serial.clear();
-		//commands = null;
-
 		initialize();
 	}
 
