@@ -426,7 +426,7 @@ public class RepRap5DDriver extends SerialDriver implements SerialFifoEventListe
 			if (e!=null) this.ePosition.set(Double.parseDouble(e));
 	
 			// applychecksum replaces the line that was to be retransmitted, into the next line.
-			if (hasChecksums) next = applyChecksum(next);
+			if (hasChecksums) next = applyNandChecksum(next);
 			
 			Base.logger.finest("sending: "+next);
 		}
@@ -578,7 +578,7 @@ public class RepRap5DDriver extends SerialDriver implements SerialFifoEventListe
 	/**
 	 * takes a line of gcode and returns that gcode with a line number and checksum
 	 */
-	public String applyChecksum(String gcode) {
+	public String applyNandChecksum(String gcode) {
 		// RepRap Syntax: N<linenumber> <cmd> *<chksum>\n
 
 		if (gcode.contains("M110"))
@@ -593,7 +593,10 @@ public class RepRap5DDriver extends SerialDriver implements SerialFifoEventListe
 		{ // only add a line number if it is not already specified
 			gcode = "N"+lineNumber.incrementAndGet()+' '+gcode+' ';
 		}
+		return applyChecksum(gcode);
+	}
 
+	public String applyChecksum(String gcode) {
 		// chksum = 0 xor each byte of the gcode (including the line number and trailing space)
 		byte checksum = 0;
 		byte[] gcodeBytes = gcode.getBytes();
