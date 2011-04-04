@@ -1,3 +1,9 @@
+0024_5d ReplicatorG
+Contributions:
+* Ben Jackson: Extensive fixes to RepRap5d driver.
+* Ben Jackson: Make "build done" popup optional (defaults on)
+* Ben Jackson: Add reversal.py plugin to sf-39
+* Ben Jackson: Avoid spurious zero-distance reversals from dimension.py
 0024 ReplicatorG
 * Support for stepper-based extruders on G4 hardware
 * Early reversal for stepper-driven extruders
