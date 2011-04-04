@@ -548,12 +548,12 @@ public class RepRap5DDriver extends SerialDriver implements SerialFifoEventListe
 
 	    if(realtimeControl) {
 		    // Rescale F value
-			r = Pattern.compile("(.*)F([0-9\\.]*)(.*)");
+		    r = Pattern.compile("(.*)F([0-9\\.]*)(.*)");
 		    m = r.matcher(fixed);
 		    if (m.find( )) {
 		    	double newvalue = Double.valueOf(m.group(2).trim()).doubleValue();
 		    	// FIXME: kind of an ugly way to test for extrusionless "travel" versus extrusion.
-		    	if(fixed.contains("E"))
+		    	if (!fixed.contains("E"))
 		    	{
 		    		newvalue *= rcTravelFeedrateMultiply;
 		    	} else {
