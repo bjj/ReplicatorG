@@ -106,6 +106,13 @@ public class RepRap5DDriver extends SerialDriver implements SerialFifoEventListe
 	 * not do this but Tonokip, Klimentkip and FiveD do
 	 */
 	private boolean okAfterResend = true;
+
+	/**
+	 * if true all E moves are relative, so there's no need to snoop
+	 * E moves and ePosition stays at 0.0 all the time.  Teacup has
+	 * always relative E.
+	 */
+	private boolean alwaysRelativeE = false;
 	
 	/**
 	 * if true the driver will wait for a "start" signal when pulsing rts low 
@@ -199,6 +206,9 @@ public class RepRap5DDriver extends SerialDriver implements SerialFifoEventListe
         }
 	if (XML.hasChildNode(xml, "okAfterResend")) {
 		okAfterResend = Boolean.parseBoolean(XML.getChildNodeValue(xml, "okAfterResend"));
+	}
+	if (XML.hasChildNode(xml, "alwaysRelativeE")) {
+		alwaysRelativeE = Boolean.parseBoolean(XML.getChildNodeValue(xml, "alwaysRelativeE"));
 	}
         
         if (XML.hasChildNode(xml, "introduceNoise")) {
@@ -423,11 +433,15 @@ public class RepRap5DDriver extends SerialDriver implements SerialFifoEventListe
 			//update the current feedrate
 			String feedrate = getRegexMatch("F(-[0-9\\.]+)", next, 1);
 			if (feedrate!=null) this.feedrate.set(Double.parseDouble(feedrate));
-	
-			//update the current extruder position
-			String e = getRegexMatch("E([-0-9\\.]+)", next, 1);
-			if (e!=null) this.ePosition.set(Double.parseDouble(e));
-	
+
+			if (!alwaysRelativeE) {
+				//update the current extruder position
+				String e = getRegexMatch("E([-0-9\\.]+)", next, 1);
+				if (e!=null) this.ePosition.set(Double.parseDouble(e));
+			} else {
+				ePosition.set(0.0);
+			}
+
 			// applychecksum replaces the line that was to be retransmitted, into the next line.
 			if (hasChecksums) next = applyNandChecksum(next);
 			
