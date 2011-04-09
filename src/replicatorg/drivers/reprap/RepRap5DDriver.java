@@ -265,7 +265,7 @@ public class RepRap5DDriver extends SerialDriver implements SerialFifoEventListe
 					}
 					if (retriesRemaining == 0)
 					{
-						this.dispose();
+						this.disconnect();
 						Base.logger.warning("RepRap not responding to RTS reset. Failed to connect.");
 						return;
 					}
@@ -293,7 +293,7 @@ public class RepRap5DDriver extends SerialDriver implements SerialFifoEventListe
 				}
 				catch (TimeoutException e)
 				{
-					this.dispose();
+					this.disconnect();
 					Base.logger.warning(
 							"RepRap not responding to gcode. Failed to connect.");
 					return;
@@ -872,8 +872,16 @@ public class RepRap5DDriver extends SerialDriver implements SerialFifoEventListe
 		return queueSize;
 	}
 
+	private synchronized void disconnect() {
+		bufferLock.lock();
+		flushBuffer();
+		setSerial(null);
+		bufferLock.unlock();
+	}
+
 	public synchronized void dispose() {
 		bufferLock.lock();
+		flushBuffer();
 		super.dispose();
 		bufferLock.unlock();
 	}
