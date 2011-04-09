@@ -68,6 +68,7 @@
 		<driver name="reprap5d">
 		    <okAfterResend>false</okAfterResend> <!-- Teacup option for reprap5d driver -->
 		    <alwaysRelativeE>true</alwaysRelativeE> <!-- Teacup option for reprap5d driver -->
+		    <okAfterStart>true</okAfterStart> <!-- Teacup option for reprap5d driver -->
 		    <pulserts>false</pulserts>
 		    <waitforstart enabled="false"></waitforstart>
 		    <debugLevel>0</debugLevel>

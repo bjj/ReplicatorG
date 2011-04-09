@@ -108,6 +108,13 @@ public class RepRap5DDriver extends SerialDriver implements SerialFifoEventListe
 	private boolean okAfterResend = true;
 
 	/**
+	 * if true the firmware sends "start" followed by "ok" on reset
+	 * and we need to eat that extra "ok".  Teacup is the only known
+	 * firmware with this behavior.
+	 */
+	private boolean okAfterStart = false;
+
+	/**
 	 * if true all E moves are relative, so there's no need to snoop
 	 * E moves and ePosition stays at 0.0 all the time.  Teacup has
 	 * always relative E.
@@ -206,6 +213,9 @@ public class RepRap5DDriver extends SerialDriver implements SerialFifoEventListe
         }
 	if (XML.hasChildNode(xml, "okAfterResend")) {
 		okAfterResend = Boolean.parseBoolean(XML.getChildNodeValue(xml, "okAfterResend"));
+	}
+	if (XML.hasChildNode(xml, "okAfterStart")) {
+		okAfterStart = Boolean.parseBoolean(XML.getChildNodeValue(xml, "okAfterStart"));
 	}
 	if (XML.hasChildNode(xml, "alwaysRelativeE")) {
 		alwaysRelativeE = Boolean.parseBoolean(XML.getChildNodeValue(xml, "alwaysRelativeE"));
@@ -743,6 +753,12 @@ public class RepRap5DDriver extends SerialDriver implements SerialFifoEventListe
 						Base.logger.severe("Firmware reset with active commands!");
 						setError("Firmware reset with active commands!");
 					}
+				}
+				if (okAfterStart) {
+					// firmware sends "ok" after start, put something here to consume it:
+					bufferLock.lock();
+					buffer.addLast(";start-ok");
+					bufferLock.unlock();
 				}
 
 				// todo: set version
