@@ -143,8 +143,11 @@ public class DriverBaseImplementation implements Driver {
 	}
 
 	public void checkErrors() throws BuildFailureException {
-		if (error.length() > 0)
-			throw new BuildFailureException(error);
+		if (error.length() > 0) {
+			String toThrow = error;
+			error = "";
+			throw new BuildFailureException(toThrow);
+		}
 	}
 
 	/***************************************************************************
