@@ -5,7 +5,7 @@
 		<geometry type="cartesian">
 			<axis id="x" length="205" maxfeedrate="5000" stepspermm="31.496" endstops="min"/>
 			<axis id="y" length="195" maxfeedrate="5000" stepspermm="31.496" endstops="min"/>
-			<axis id="z" length="140" maxfeedrate="1000" stepspermm="1133.858" endstops="min"/>
+			<axis id="z" length="140" maxfeedrate="200" stepspermm="1133.858" endstops="min"/>
 		</geometry>
 		<tools>
 			<tool name="Stepper-based extruder" type="extruder" material="abs" motor="true" floodcoolant="false" mistcoolant="false" fan="true" valve="false" collet="false" heater="true" stepper_axis="a" motor_steps="1000" heatedplatform="true" />
@@ -31,7 +31,7 @@
 		<geometry type="cartesian">
 			<axis id="x" length="205" maxfeedrate="5000" stepspermm="31.496" endstops="min"/>
 			<axis id="y" length="195" maxfeedrate="5000" stepspermm="31.496" endstops="min"/>
-			<axis id="z" length="140" maxfeedrate="1000" stepspermm="1133.858" endstops="min"/>
+			<axis id="z" length="140" maxfeedrate="200" stepspermm="1133.858" endstops="min"/>
 		</geometry>
 		<tools>
 			<tool name="Stepper-based extruder" type="extruder" material="abs" motor="true" floodcoolant="false" mistcoolant="false" fan="true" valve="false" collet="false" heater="true" stepper_axis="a" motor_steps="1000" heatedplatform="true" />
@@ -57,7 +57,7 @@
 		<geometry type="cartesian">
 			<axis id="x" length="205" maxfeedrate="5000" stepspermm="31.496" endstops="min"/>
 			<axis id="y" length="195" maxfeedrate="5000" stepspermm="31.496" endstops="min"/>
-			<axis id="z" length="140" maxfeedrate="1000" stepspermm="1133.858" endstops="min"/>
+			<axis id="z" length="140" maxfeedrate="200" stepspermm="1133.858" endstops="min"/>
 		</geometry>
 		<tools>
 			<tool name="Stepper-based extruder" type="extruder" material="abs" motor="true" floodcoolant="false" mistcoolant="false" fan="true" valve="false" collet="false" heater="true" stepper_axis="a" motor_steps="1000" heatedplatform="true" />
