@@ -969,6 +969,7 @@ public class RepRap5DDriver extends SerialDriver implements SerialFifoEventListe
 
 	public void disableDrives() throws RetryException {
 		sendCommand("M18");
+		sendCommand("M84");     // Klimentkip
 
 		super.disableDrives();
 	}
