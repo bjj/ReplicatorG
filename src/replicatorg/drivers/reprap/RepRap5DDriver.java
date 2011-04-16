@@ -289,24 +289,28 @@ public class RepRap5DDriver extends SerialDriver implements SerialFifoEventListe
 
 
 
-			//Send a line # reset command, this allows us to catch the "ok" response in 
-			//case we missed the "start" response which we seem to often miss. (also it 
-			//resets the line number which is good)
+			// Send a line # reset command, this allows us to catch the "ok" response.
+			// If we get a "start" while trying this we'll go again.
 			synchronized(okReceived)
 			{
-				sendCommand("M110", false);
-				Base.logger.fine("GCode sent. waiting for response..");
-				
-				try
+				okReceived.set(false);
+				while (!okReceived.get())
 				{
-					waitForNotification(okReceived, 3000);
-				}
-				catch (TimeoutException e)
-				{
-					this.disconnect();
-					Base.logger.warning(
-							"RepRap not responding to gcode. Failed to connect.");
-					return;
+					sendCommand("M110", false);
+					Base.logger.info("GCode sent. waiting for response..");
+					
+					try
+					{
+						waitForNotification(okReceived, 10000);
+					}
+					catch (RetryException e)
+					{ }
+					catch (TimeoutException e)
+					{
+						this.disconnect();
+						Base.logger.warning("Firmware not responding to gcode. Failed to connect.");
+						return;
+					}
 				}
 			}
 
@@ -318,7 +322,7 @@ public class RepRap5DDriver extends SerialDriver implements SerialFifoEventListe
 		}
 	}
 	
-	private void waitForNotification(AtomicBoolean notifier, long timeout) throws TimeoutException
+	private void waitForNotification(AtomicBoolean notifier, long timeout) throws TimeoutException, RetryException
 	{
 		//Wait for the RepRap to respond
 		try {
@@ -335,10 +339,8 @@ public class RepRap5DDriver extends SerialDriver implements SerialFifoEventListe
 		}
 		else
 		{
-			throw new TimeoutException();
+			throw new RetryException();
 		}
-
-		
 	}
 	
 	private void pulseRTS() throws TimeoutException
@@ -349,13 +351,20 @@ public class RepRap5DDriver extends SerialDriver implements SerialFifoEventListe
 		Base.logger.info("Attempting to reset RepRap (pulsing RTS)");
 		
 		synchronized (startReceived) {
+			startReceived.set(false);
 			serial.pulseRTSLow();
 			
 			if (waitForStart == false) return;
 	
 			// Wait for the RepRap to respond to the RTS pulse attempt 
 			// or for this to timeout.
-			waitForNotification(startReceived, waitForStartTimeout);
+			while (!startReceived.get()) {
+				try {
+					waitForNotification(startReceived, waitForStartTimeout);
+				} catch (RetryException e) {
+					continue;
+				}
+			}
 		}
 	}
 
@@ -739,16 +748,15 @@ public class RepRap5DDriver extends SerialDriver implements SerialFifoEventListe
 				// Reset line number first in case gcode is sent below
 				lineNumber.set(-1);
 
+				boolean active = !buffer.isEmpty();
+				flushBuffer();
+
 				if (isInitialized()) {
-
-					// If there are outstanding commands try to abort any print in progress.
-					// This is a poor test:  but do we know if we're printing at this level?
-					boolean active = !buffer.isEmpty();
-					flushBuffer();
-
-					// tried setInitialized(false); but that didn't work well
 					sendInitializationGcode(false);
 
+					// If there were outstanding commands try to abort any print in progress.
+					// This is a poor test:  but do we know if we're printing at this level?
+					// tried setInitialized(false); but that didn't work well
 					if (active) {
 						Base.logger.severe("Firmware reset with active commands!");
 						setError("Firmware reset with active commands!");
@@ -765,6 +773,12 @@ public class RepRap5DDriver extends SerialDriver implements SerialFifoEventListe
 				synchronized (startReceived) {
 					startReceived.set(true);
 					startReceived.notifyAll();
+				}
+
+				// Wake up connect task to try again
+				synchronized (okReceived) {
+					okReceived.set(false);
+					okReceived.notifyAll();
 				}
 
 			} else if (line.startsWith("extruder fail")) {
