@@ -322,7 +322,7 @@ public class RepRap5DDriver extends SerialDriver implements SerialFifoEventListe
 	{
 		//Wait for the RepRap to respond
 		try {
-			notifier.wait(waitForStartTimeout);
+			notifier.wait(timeout);
 		} catch (InterruptedException e) {
 			//Presumably we're shutting down
 			Thread.currentThread().interrupt();
