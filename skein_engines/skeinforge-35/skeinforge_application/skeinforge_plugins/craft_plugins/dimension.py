@@ -146,11 +146,14 @@ class DimensionRepository:
 
 class DimensionSkein:
 	"A class to dimension a skein of extrusions."
+
+	Stopped, Forward, Reverse = range(3)
+
 	def __init__(self):
 		self.absoluteDistanceMode = True
 		self.distanceFeedRate = gcodec.DistanceFeedRate()
 		self.feedRateMinute = None
-		self.isExtruderActive = False
+		self.extruderDirection = self.Stopped
 		self.lineIndex = 0
 		self.oldLocation = None
 		self.operatingFlowRate = None
@@ -205,10 +208,12 @@ class DimensionSkein:
 	def getExtrusionDistanceString( self, distance, splitLine ):
 		"Get the extrusion distance string."
 		self.feedRateMinute = gcodec.getFeedRateMinute( self.feedRateMinute, splitLine )
-		if not self.isExtruderActive:
+		if self.extruderDirection == self.Stopped:
 			return ''
 		if distance <= 0.0:
 			return ''
+		if self.extruderDirection == self.Reverse:
+			distance = -distance
 		return self.getExtrusionDistanceStringFromExtrusionDistance( self.flowRate * 60.0 / self.feedRateMinute * distance )
 
 	def getExtrusionDistanceStringFromExtrusionDistance( self, extrusionDistance ):
@@ -251,14 +256,22 @@ class DimensionSkein:
 		elif firstWord == 'G91':
 			self.absoluteDistanceMode = False
 		elif firstWord == 'M101':
-			self.addLinearMoveExtrusionDistanceLine( self.restartDistance )
-			if not self.repository.relativeExtrusionDistance.value:
+			if self.restartDistance != 0:
+				self.addLinearMoveExtrusionDistanceLine( self.restartDistance )
+			# distance limit is based on 32-bit float retaining about 0.01 resolution ~(2^23/100):
+			if not self.repository.relativeExtrusionDistance.value and self.totalExtrusionDistance > 100000:
 				self.distanceFeedRate.addLine('G92 E0')
 				self.totalExtrusionDistance = 0.0
-			self.isExtruderActive = True
+			self.extruderDirection = self.Forward
+		elif firstWord == 'M102':
+			# No special retraction handling since this is
+			# presumed to be here due to some other retraction
+			# processing such as reversal.py
+			self.extruderDirection = self.Reverse
 		elif firstWord == 'M103':
-			self.addLinearMoveExtrusionDistanceLine( - self.repository.retractionDistance.value )
-			self.isExtruderActive = False
+			if self.repository.retractionDistance.value != 0:
+				self.addLinearMoveExtrusionDistanceLine( - self.repository.retractionDistance.value )
+			self.extruderDirection = self.Stopped
 		elif firstWord == 'M108':
 			self.flowRate = float( splitLine[1][1 :] )
 		self.distanceFeedRate.addLine(line)

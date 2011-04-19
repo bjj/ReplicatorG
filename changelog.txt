@@ -7,7 +7,11 @@
 * Resize main window so tooltips don't refresh the whole view
 * Add frostruder support for Thingomatic
 * Bugfix for cupcake profiles: disable wipe
-* Some fixes for Ramps 5D
+Contributions:
+* Ben Jackson: Extensive fixes to RepRap5d driver.
+* Ben Jackson: Make "build done" popup optional (defaults on)
+* Ben Jackson: Add reversal.py plugin to sf-39
+* Ben Jackson: Avoid spurious zero-distance reversals from dimension.py
 
 0024 ReplicatorG
 * Support for stepper-based extruders on G4 hardware
